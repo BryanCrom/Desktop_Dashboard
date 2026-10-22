@@ -1,57 +1,32 @@
-import { useEffect, useState } from "react";
-import { fetch } from "@tauri-apps/plugin-http";
-
-interface SteamOwnedGamesData {
-  response: {
-    game_count: number;
-    games: SteamGame[];
-  };
-}
-
-interface SteamGame {
-  name: string;
-  img_icon_url: string;
-}
+import useFetchGames from "../hooks/useFetchGames";
 
 const GamesPage = () => {
-  const [games, setGames] = useState<SteamGame[]>();
+  const { games, loading } = useFetchGames();
 
-  useEffect(() => {
-    const fetchSteamGames = async () => {
-      try {
-        const response = await fetch(
-          `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${import.meta.env.VITE_STEAM_API_KEY}&steamid=76561198282312243&format=json&include_appinfo=true&appids_filter[0]=250900`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          },
-        );
-
-        if (!response.ok) {
-          console.error("Error fetching steam games:", response);
-        } else {
-          const data: SteamOwnedGamesData = await response.json();
-          console.log(data.response.games);
-          setGames(data.response.games);
-        }
-      } catch (error) {
-        console.error("fetchSteamGames Unexpected Error: ", error);
-      }
-    };
-
-    fetchSteamGames();
-  }, []);
+  if (loading) {
+    return <>Loading</>;
+  }
 
   return (
-    <div>
-      <ul>
+    <div className="h-full">
+      <ul className="h-full overflow-y-auto">
         {games?.map((value, index) => (
-          <li key={index}>{value.name}</li>
+          <li key={index} className="text-base-content m-2">
+            <div className="flex">
+              {/* <img
+                src={`https://media.steampowered.com/steamcommunity/public/images/apps/${value.appid}/${value.img_icon_url}.jpg`}
+              /> */}
+              <p>{value.name}</p>
+              <img
+                src={`https://cdn.cloudflare.steamstatic.com/steam/apps/${value.appid}/library_600x900.jpg`}
+              />
+            </div>
+            <a href={`steam://run/${value.appid}`} className="btn btn-primary">
+              Launch Game
+            </a>
+          </li>
         ))}
       </ul>
-      <a href="steam://run/250900">Launch Game</a>
     </div>
   );
 };
